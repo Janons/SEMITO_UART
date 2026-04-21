@@ -179,6 +179,20 @@ module txuart #(
 		last_state <= (state == TXU_SECOND_STOP);
 	else
 		last_state <= (state == TXU_STOP);
-	// }}}
+
+
+			// This is the missing baud counter logic
+	always @(posedge i_clk)
+	begin
+		if (i_reset || !r_busy)
+			baud_counter <= clocks_per_baud - 28'h1;
+		else if (zero_baud_counter)
+			baud_counter <= clocks_per_baud - 28'h1;
+		else
+			baud_counter <= baud_counter - 28'h1;
+
+		// This tells the rest of the code when one bit-width of time has passed
+		zero_baud_counter <= (baud_counter == 28'h1);
+	end
 
     endmodule
