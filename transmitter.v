@@ -74,16 +74,115 @@ module txuart #(
 	reg	 r_busy, zero_baud_counter, last_state;
 
 
+	wire ck_cts;
+// If setup bit 30 is 1, we ignore CTS and stay "Ready".
+// If it's 0, we check i_cts_n (inverted because it's active-low).
+	assign ck_cts = (r_setup[30]) ? 1'b1 : !i_cts_n;
 
     initial r_busy = 1'b0;
     inital state = TXU_IDLE;
 
-    //start the state machine
-    always @(posedge i_clk)
-    if (i_reset)
-    begin
-        r_busy <= 1'b1;
-        state <= TXU_IDLE
-    end
+	// r_busy, state
+	// {{{
+	initial	r_busy = 1'b1;
+	initial	state  = TXU_IDLE;
+	always @(posedge i_clk)
+	if (i_reset)
+	begin
+		r_busy <= 1'b1;
+		state <= TXU_IDLE;
+	end else if (i_break)
+	begin
+		state <= TXU_BREAK;
+		r_busy <= 1'b1;
+	end else if (!zero_baud_counter)
+	begin // r_busy needs to be set coming into here
+		r_busy <= 1'b1;
+	end else if (state == TXU_BREAK)
+	begin
+		state <= TXU_IDLE;
+		r_busy <= !ck_cts;
+	end else if (state == TXU_IDLE)	// STATE_IDLE
+	begin
+		if ((i_wr)&&(!r_busy))
+		begin	// Immediately start us off with a start bit
+			r_busy <= 1'b1;
+			case(i_data_bits)
+			2'b00: state <= TXU_BIT_ZERO;
+			2'b01: state <= TXU_BIT_ONE;
+			2'b10: state <= TXU_BIT_TWO;
+			2'b11: state <= TXU_BIT_THREE;
+			endcase
+		end else begin // Stay in idle
+			r_busy <= !ck_cts;
+		end
+	end else begin
+		// One clock tick in each of these states ...
+		// baud_counter <= clocks_per_baud - 28'h01;
+		r_busy <= 1'b1;
+		if (state[3] == 0) // First 8 bits
+		begin
+			if (state == TXU_BIT_SEVEN)
+				state <= TXU_STOP;
+			else
+				state <= state + 1;
+		end else if (state == TXU_PARITY)
+		begin
+			state <= TXU_STOP;
+		end else if (state == TXU_STOP)
+		begin // two stop bit(s)
+			if (dblstop)
+				state <= TXU_SECOND_STOP;
+			else
+				state <= TXU_IDLE;
+		end else // `TXU_SECOND_STOP and default:
+		begin
+			state <= TXU_IDLE; // Go back to idle
+			// Still r_busy, since we need to wait
+			// for the baud clock to finish counting
+			// out this last bit.
+		end
+	end 
+
+	assign	o_busy = (r_busy);
+
+
+	initial	r_setup = INITIAL_SETUP;
+	always @(posedge i_clk)
+	if (!o_busy)
+		r_setup <= i_setup;
+
+	always @(posedge i_clk)
+	if (!r_busy)
+		lcl_data <= i_data;
+	else if (zero_baud_counter)
+		lcl_data <= { 1'b0, lcl_data[7:1] };
+	// }}}
+
+
+	//output logic
+	initial	o_uart_tx = 1'b1;
+	always @(posedge i_clk)
+	if (i_reset)
+		o_uart_tx <= 1'b1;
+	else if ((i_break)||((i_wr)&&(!r_busy)))
+		o_uart_tx <= 1'b0;
+	else if (zero_baud_counter)
+		casez(state)
+		4'b0???:	o_uart_tx <= lcl_data[0];
+		default:	o_uart_tx <= 1'b1;
+		endcase
+
+
+
+	initial	last_state = 1'b0;
+	always @(posedge i_clk)
+	if (i_reset)
+		last_state <= 1'b0;
+	else if (dblstop)
+		last_state <= (state == TXU_SECOND_STOP);
+	else
+		last_state <= (state == TXU_STOP);
+	// }}}
 
     endmodule
