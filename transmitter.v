@@ -79,11 +79,7 @@ module txuart #(
 // If it's 0, we check i_cts_n (inverted because it's active-low).
 	assign ck_cts = (r_setup[30]) ? 1'b1 : !i_cts_n;
 
-    initial r_busy = 1'b0;
-    inital state = TXU_IDLE;
 
-	// r_busy, state
-	// {{{
 	initial	r_busy = 1'b1;
 	initial	state  = TXU_IDLE;
 	always @(posedge i_clk)
