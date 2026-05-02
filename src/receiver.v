@@ -5,6 +5,7 @@
 module receiver (
     input clk,
     input uart_rx,
+    input rst_n,
     output reg [7:0] data,
     output reg data_ready
 );
@@ -34,6 +35,11 @@ always @(posedge clk) //synchronization
 
 initial baud_counter = 0;
 always @(posedge clk) begin //timing and initialization for baud
+if (!rst_n) begin
+        baud_counter <= 0;
+        state <= IDLE;
+end else begin
+
     if (state == IDLE) begin  
         baud_counter <= 0; 
         state <= IDLE;
@@ -52,6 +58,7 @@ always @(posedge clk) begin //timing and initialization for baud
     end else begin
         baud_counter <= baud_counter - 1'b1;
     end
+end
 end
 
 always @(posedge clk) begin //we insert the new data

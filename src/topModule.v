@@ -1,6 +1,9 @@
 module topModule (
     input  wire clk,
-    input  wire rst_n,   
+    input  wire rst_n,
+    input wire rx_data,
+    input wire rx_ready,  
+    input wire uartRx,
     output wire uart_txd,
     output wire o_led      // ← add this
 );
@@ -12,8 +15,6 @@ wire       tx_idle;
 reg [7:0]  message [0:1];
 reg [1:0]  byteIndex = 0;
 
-
-assign o_led = uart_txd;   // ← LED mirrors TX line
 
 initial begin
     message[0] = 8'h48;  // 'H'
@@ -78,7 +79,7 @@ end
 reg led_reg = 0;
 
 always @(posedge i_clk) begin
-    if (!i_reset_n)
+    if (!rst_n)
         led_reg <= 0;
     else if (rx_ready && rx_data == "A")
         led_reg <= ~led_reg;   // each received A toggles LED
