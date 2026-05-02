@@ -29,8 +29,6 @@ reg q_uart;
 reg [9:0] baud_counter;
 reg [3:0] state; //we should be able to display which step we are in
 
-initial state = IDLE;
-initial data = 8'd0;
 initial {ck_uart, q_uart} = -1; //we initialize these values to -1
 always @(posedge clk) //synchronization
     {ck_uart, q_uart} <= {q_uart, uart_rx}; //q_uart is the most recent, ck_uart is the synchronized bit we consider
@@ -47,7 +45,7 @@ end else begin
         state <= IDLE;
         if (!ck_uart) begin
             state <= START;
-            baud_counter <= (clock_per_baud) + (clock_per_baud / 2); //we initialize with .5 bauds (this is our initial delay)   
+            baud_counter <= (clock_per_baud - 1'b1) + (clock_per_baud / 2); //we initialize with 1.5 bauds (this is our initial delay)   
         end
     end else if (baud_counter == 0) begin
         state <= state + 1;
@@ -64,18 +62,14 @@ end
 end
 
 always @(posedge clk) begin //we insert the new data
-    if (!rst_n) begin
-        data <= 8'd0;
-    end else if ((baud_counter == 0) && (state >= BIT0) && (state <= BIT7)) begin
+    if ((baud_counter == 0) && (state >= BIT0) && (state <= BIT7)) begin
         data <= {ck_uart, data[7:1]};
     end
 end
 
 initial data_ready = 0; 
-always @(posedge clk) begin
-    if (!rst_n)
-        data_ready <= 1'b0;
-    else
-        data_ready <= (baud_counter == 0) && (state == STOP) && ck_uart;
+always @(posedge clk) begin //data ready output
+    data_ready <= (baud_counter == 0) && (state == STOP); 
 end
+
 endmodule
