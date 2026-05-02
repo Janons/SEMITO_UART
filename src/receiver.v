@@ -45,9 +45,9 @@ end else begin
     if (state == IDLE) begin  
         baud_counter <= 0; 
         state <= IDLE;
-        if (!ck_uart) begin
+        if (ck_uart == 1'b1 && q_uart == 1'b0) begin
             state <= START;
-            baud_counter <= (clock_per_baud) + (clock_per_baud / 2); //we initialize with .5 bauds (this is our initial delay)   
+            baud_counter <= (clock_per_baud / 2); //we initialize with .5 bauds (this is our initial delay)   
         end
     end else if (baud_counter == 0) begin
         state <= state + 1;
