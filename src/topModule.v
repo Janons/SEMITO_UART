@@ -31,6 +31,13 @@ txuart #(.data_width(8)) uart_inst (
     .tx_idle  (tx_idle)
 );
 
+receiver my_rx (
+    .clk(i_clk),
+    .uart_rx(uartRx),
+    .data(rx_data),
+    .data_ready(rx_ready)
+);
+
 reg [1:0] senderState = 0;
 localparam LOAD = 0;
 localparam SEND = 1;
@@ -67,5 +74,16 @@ always @(posedge clk or negedge rst_n) begin
         endcase
     end
 end
+
+reg led_reg = 0;
+
+always @(posedge i_clk) begin
+    if (!i_reset_n)
+        led_reg <= 0;
+    else if (rx_ready && rx_data == "A")
+        led_reg <= ~led_reg;   // each received A toggles LED
+end
+
+assign o_led = led_reg;
 
 endmodule
