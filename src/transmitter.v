@@ -6,7 +6,7 @@ module txuart #(
     input  wire                  rst_n,
     input  wire                  tx_valid,
     input  wire [data_width-1:0] tx_data,
-    input  wire [15:0]           prescale,
+    input  wire [15:0]           clk_per_baud,
     output reg                   tx_ready,
     output wire                  txd,
     output wire                  tx_idle
@@ -53,7 +53,7 @@ always @(posedge clk or negedge rst_n) begin
             TX_STATE_START_BIT: begin
                 txPinRegister <= 0;
                 tx_ready      <= 0;
-                if (txCounter >= prescale - 1) begin
+                if (txCounter >= clk_per_baud - 1) begin
                     txState     <= TX_STATE_WRITE;
                     txCounter   <= 0;
                     txBitNumber <= 0;
@@ -64,7 +64,7 @@ always @(posedge clk or negedge rst_n) begin
 
             TX_STATE_WRITE: begin
                 txPinRegister <= dataOut[0];
-                if (txCounter >= prescale - 1) begin
+                if (txCounter >= clk_per_baud - 1) begin
                     if (txBitNumber == data_width-1) begin
                         txState     <= TX_STATE_STOP_BIT;
                         txCounter   <= 0;
@@ -81,7 +81,7 @@ always @(posedge clk or negedge rst_n) begin
 
             TX_STATE_STOP_BIT: begin
                 txPinRegister <= 1;
-                if (txCounter >= prescale - 1)begin
+                if (txCounter >= clk_per_baud - 1)begin
                     txState   <= TX_STATE_IDLE;
                     txCounter <= 0;
                     tx_ready  <= 1;
