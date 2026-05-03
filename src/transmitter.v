@@ -46,7 +46,7 @@ always @(posedge clk or negedge rst_n) begin
                     tx_ready      <= 0;
                 end else begin
                     txPinRegister <= 1;
-                    tx_ready      <= 0;
+                    tx_ready      <= 1;
                 end
             end
 
