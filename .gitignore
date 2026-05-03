@@ -1,0 +1,9 @@
+# Generated build files — never commit these
+hardware.json
+pnr.json
+pack.fs
+*.fs
+*.json
+
+# Keep source files
+!constraints.cst
