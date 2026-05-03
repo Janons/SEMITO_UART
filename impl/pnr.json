@@ -793,7 +793,7 @@
           },
           "attributes": {
             "BEL_STRENGTH": "00000000000000000000000000000101",
-            "NEXTPNR_BEL": "X0Y20/IOBB",
+            "NEXTPNR_BEL": "X0Y24/IOBB",
             "src": "src/topModule.v:4.16-4.23",
             "&DRIVE=8": "00000000000000000000000000000001",
             "&IO_TYPE=LVCMOS18": "00000000000000000000000000000001",
