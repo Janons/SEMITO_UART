@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -e
+export PATH="$HOME/.local/bin:$PATH"
 
 # ── Config ──────────────────────────────────────────────
 TOP="topModule"
 DEVICE="GW1NR-LV9QN88PC6/I5"
 FAMILY="GW1N-9C"
 BOARD="tangnano9k"
-SOURCES="src/topModule.v src/transmitter.v src/receiver.v"
+SOURCES="src/topModule.v src/transmitter.v src/receiver.v src/fifo.v"
 CST="cst/constraints.cst"
 # ────────────────────────────────────────────────────────
 
